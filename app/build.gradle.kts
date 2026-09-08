@@ -49,6 +49,10 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     
-    // Tesseract OCR Dependency (100% offline, supports Arabic)
+    // Tesseract OCR Dependency (100% offline, supports Arabic & English)
     implementation("cz.adaptech.tesseract4android:tesseract4android:4.3.0")
+    
+    // Coroutines and Lifecycle Scope for background threading
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
 }
