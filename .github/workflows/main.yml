@@ -20,6 +20,11 @@ jobs:
       - name: Grant Permission
         run: chmod +x gradlew
 
+      - name: Download Tesseract Language Data
+        run: |
+          mkdir -p app/src/main/assets/tessdata
+          wget https://github.com/tesseract-ocr/tessdata/raw/main/ara.traineddata -O app/src/main/assets/tessdata/ara.traineddata
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
