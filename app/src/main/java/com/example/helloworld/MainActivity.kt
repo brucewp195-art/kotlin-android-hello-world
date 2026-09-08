@@ -10,7 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.arabic.TextRecognizerOptions
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,6 +31,10 @@ class MainActivity : AppCompatActivity() {
 
         imageView = findViewById(R.id.imageView)
         textViewResult = findViewById(R.id.textViewResult)
+        
+        // This ensures you can long-press, highlight, and copy the text!
+        textViewResult.setTextIsSelectable(true)
+
         val btnPickImage = findViewById<Button>(R.id.btnPickImage)
         val btnExtractText = findViewById<Button>(R.id.btnExtractText)
 
@@ -50,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private fun extractText(uri: Uri) {
         try {
             val image = InputImage.fromFilePath(this, uri)
+            // Using Arabic options which process both Arabic and English natively
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
             textViewResult.text = "Processing..."
