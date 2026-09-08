@@ -17,11 +17,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Download Arabic Tesseract Model
-        run: |
-          mkdir -p app/src/main/assets/tessdata
-          curl -L -o app/src/main/assets/tessdata/ara.traineddata https://github.com/tesseract-ocr/tessdata_fast/raw/main/ara.traineddata
-
       - name: Grant Permission
         run: chmod +x gradlew
 
