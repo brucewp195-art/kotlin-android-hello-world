@@ -1,5 +1,6 @@
 package com.example.helloworld
 
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
@@ -8,15 +9,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.arabic.TextRecognizerOptions
+import com.googlecode.tesseract.android.TessBaseAPI
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var imageView: ImageView
     private lateinit var textViewResult: TextView
     private var selectedImageUri: Uri? = null
+    private lateinit var tess: TessBaseAPI
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -38,6 +41,9 @@ class MainActivity : AppCompatActivity() {
         val btnPickImage = findViewById<Button>(R.id.btnPickImage)
         val btnExtractText = findViewById<Button>(R.id.btnExtractText)
 
+        // Setup Tesseract when the app starts
+        prepareTesseract()
+
         btnPickImage.setOnClickListener {
             pickImageLauncher.launch("image/*")
         }
@@ -51,24 +57,54 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun extractText(uri: Uri) {
+    private fun prepareTesseract() {
         try {
-            val image = InputImage.fromFilePath(this, uri)
-            // Using Arabic options which process both Arabic and English natively
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
-            textViewResult.text = "Processing..."
-
-            recognizer.process(image)
-                .addOnSuccessListener { visionText ->
-                    textViewResult.text = visionText.text
+            val dir = File(filesDir, "tessdata")
+            if (!dir.exists()) dir.mkdir()
+            
+            // Copy the Arabic data file from assets to local storage
+            val trainedData = File(dir, "ara.traineddata")
+            if (!trainedData.exists()) {
+                assets.open("tessdata/ara.traineddata").use { input ->
+                    FileOutputStream(trainedData).use { output ->
+                        input.copyTo(output)
+                    }
                 }
-                .addOnFailureListener { e ->
-                    textViewResult.text = "Error extracting text: ${e.message}"
-                }
+            }
+            
+            tess = TessBaseAPI()
+            // Initialize Tesseract with the Arabic language pack
+            tess.init(filesDir.absolutePath, "ara")
         } catch (e: Exception) {
             e.printStackTrace()
-            textViewResult.text = "Failed to load image."
+        }
+    }
+
+    private fun extractText(uri: Uri) {
+        try {
+            textViewResult.text = "Processing..."
+            
+            val inputStream: InputStream? = contentResolver.openInputStream(uri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            
+            if (bitmap != null) {
+                tess.setImage(bitmap)
+                val extractedText = tess.utF8Text
+                textViewResult.text = if (extractedText.isNotBlank()) extractedText else "No text found in image."
+            } else {
+                textViewResult.text = "Failed to decode image."
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            textViewResult.text = "Error extracting text: ${e.message}"
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Clean up memory when the app closes
+        if (::tess.isInitialized) {
+            tess.recycle()
         }
     }
 }
